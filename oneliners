@@ -1,0 +1,1 @@
+(HOST=www.example.com; PORT=443; openssl s_client -servername $HOST -connect $HOST:$PORT < /dev/null | openssl x509 -noout -dates)
