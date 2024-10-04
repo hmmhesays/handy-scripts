@@ -1,0 +1,8 @@
+# Create a rule to track RST packets from unique source IPs
+/sbin/iptables -A INPUT -p tcp --tcp-flags RST RST -m recent --set --name RST_LIMIT
+
+# Allow RST packets from source IPs at a rate of 2 per second with a burst of 2
+/sbin/iptables -A INPUT -p tcp --tcp-flags RST RST -m recent --update --seconds 1 --hitcount 3 --name RST_LIMIT -j DROP
+
+# Allow legitimate RST packets from sources that do not exceed the limit
+/sbin/iptables -A INPUT -p tcp --tcp-flags RST RST -j ACCEPT
