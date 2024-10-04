@@ -1,0 +1,39 @@
+# Drop invalid fragments (non-first fragments with invalid headers)
+# This helps mitigate overlapping fragment attacks like Teardrop.
+iptables -t mangle -A PREROUTING -f -m frag --fragmore -j DROP
+
+# Limit the rate of fragmented packets to prevent fragment floods (DDoS mitigation)
+# This limits the number of fragments to 5 per second with an initial burst of 20.
+iptables -t mangle -A PREROUTING -f -m limit --limit 5/second --limit-burst 20 -j ACCEPT
+iptables -t mangle -A PREROUTING -f -j DROP
+
+# Drop tiny fragments (used in evasion attacks and DoS) with size less than 500 bytes
+# This filters unusually small fragments.
+iptables -t mangle -A PREROUTING -f -m frag --fragmore -m length --length 1:500 -j DROP
+
+# Drop fragmented ICMP packets (used in ICMP-based fragmentation attacks like Ping of Death)
+# ICMP fragments are often used in malicious attacks, especially when oversized.
+iptables -t mangle -A PREROUTING -p icmp -f -j DROP
+
+# Drop TCP fragments that are missing headers (malicious or malformed fragments)
+# Prevents fragments that don't carry essential TCP flags.
+iptables -t mangle -A PREROUTING -p tcp -f ! --tcp-flags SYN,ACK,FIN,RST -j DROP
+
+# Drop fragmented SYN packets (malicious fragmentation should not occur during connection establishment)
+# SYN packets should never be fragmented, indicating a possible attack.
+iptables -t mangle -A PREROUTING -p tcp -f --tcp-flags SYN,ACK SYN -j DROP
+
+# Drop overlapping fragments (used in Teardrop and similar attacks)
+# This catches non-first fragments with suspicious behavior.
+iptables -t mangle -A PREROUTING -m frag --fragmore -j DROP
+
+# Accept first fragments of a packet (as they contain headers)
+# This ensures first fragments, which are generally legitimate, are accepted.
+iptables -t mangle -A PREROUTING -p tcp -m frag --fragfirst -j ACCEPT
+
+# Log suspicious fragmented packets for analysis (optional, for monitoring purposes)
+# Helps log potentially malicious fragmented packets before dropping them.
+iptables -t mangle -A PREROUTING -f -j LOG --log-prefix "FRAG_DROP: "
+
+# Drop all suspicious fragments after logging
+iptables -t mangle -A PREROUTING -f -j DROP
