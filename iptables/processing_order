@@ -1,0 +1,41 @@
+Order of iptables Tables
+Raw Table:
+
+This table is mainly used for configuring exemptions from connection tracking. It allows you to control whether a packet should be tracked or not.
+The PREROUTING and OUTPUT chains are used here, but rules in the raw table are typically not used for NAT or filtering.
+Mangle Table:
+
+This table is used for specialized packet alteration. You can change various packet headers, set QoS (Quality of Service) values, or modify the Type of Service (TOS) field.
+It has chains for PREROUTING, POSTROUTING, INPUT, OUTPUT, and FORWARD.
+NAT Table:
+
+This table is specifically designed for Network Address Translation. It is used to modify packet source or destination addresses.
+The NAT table processes packets in the PREROUTING, POSTROUTING, and OUTPUT chains to handle DNAT (Destination NAT) and SNAT (Source NAT) operations.
+Filter Table (default):
+
+This is the default table for filtering packets. It’s used to define rules for allowing or blocking traffic.
+The INPUT, FORWARD, and OUTPUT chains are used here.
+Packet Processing Flow
+When a packet comes into the system, it is processed in the following order:
+
+Raw Table:
+
+PREROUTING
+OUTPUT
+Mangle Table:
+
+PREROUTING
+INPUT
+FORWARD
+OUTPUT
+POSTROUTING
+NAT Table:
+
+PREROUTING
+OUTPUT
+POSTROUTING
+Filter Table:
+
+INPUT
+FORWARD
+OUTPUT
