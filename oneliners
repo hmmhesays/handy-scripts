@@ -1,2 +1,5 @@
 #Check SSL Certs
 (HOST=www.example.com; PORT=443; openssl s_client -servername $HOST -connect $HOST:$PORT < /dev/null | openssl x509 -noout -dates)
+
+###If you unlink /lib by accident
+/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 --library-path /usr/lib/x86_64-linux-gnu /usr/bin/ln -s /usr/lib /lib
