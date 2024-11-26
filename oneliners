@@ -3,3 +3,15 @@
 
 ###If you unlink /lib by accident
 /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 --library-path /usr/lib/x86_64-linux-gnu /usr/bin/ln -s /usr/lib /lib
+
+######kamailio memory#######
+kamctl stats shmem
+kamcmd mod.stats all shm
+kamcmd pkg.stats
+kamcmd mod.stats all pkg
+
+####human readable
+kamctl stats shmem | perl -e 'while(<STDIN>) { if($_ =~ m/(.*) = (.*)/) { print "$1 = " . $2/1000000 . "\n"} else { print $_ }; }'
+
+kamcmd stats.get_statistics shmem: | perl -e 'while(<STDIN>) { $_ =~ m/(.*) = (.*)/; print "$1 = " . $2/1000000 . "\n"; }'
+
