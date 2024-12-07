@@ -4,45 +4,10 @@ echo "RUNNING DEPLOY AT $(date)" >> /var/log/letsencrypt.log
 
 for arg in $RENEWED_DOMAINS; do
   echo "Argument: $arg"
-  echo "updating $arg" >> /tmp/letsencrypt.log
-  # shellcheck disable=SC2001
-  arg=$(echo "$arg" | sed 's/^\*\.//')
-#!/bin/bash
-BASE_DIR="/etc/letsencrypt/live"
-echo "RUNNING DEPLOY AT $(date)" >> /tmp/letsencrypt.log
-
-for arg in $RENEWED_DOMAINS; do
-  echo "Argument: $arg"
   echo "updating $arg" >> /var/log/letsencrypt.log
   # shellcheck disable=SC2001
   arg=$(echo "$arg" | sed 's/^\*\.//')
   echo "parsed $arg" >> /var/log/letsencrypt.log
-  WORKING_DIR="$BASE_DIR/$arg"
-  # Define the lock file
-  combined="$WORKING_DIR/combined.pem"
-  fullchain="$WORKING_DIR/fullchain.pem"
-  privkey="$WORKING_DIR/privkey.pem"
-
-  # Dynamically allocate a random file descriptor
-  exec {fd}>"$combined"
-
-  # Acquire the lock using the dynamically chosen file descriptor
-  flock -x "$fd" || {
-    echo "Failed to acquire lock" >&2
-    exit 1
-  }
-
-  # Critical section: protected code
-  echo "Lock acquired on FD $fd. Performing operations..."
-  cat "$fullchain" "$privkey" > "$combined"
-  sha256sum "$combined" | awk '{print $1}' > "$WORKING_DIR/combined.sha256"
-  echo "Operations complete."
-
-  # Release the lock (automatic when the script exits)
-  exec {fd}>&-
-  exit 0
-done
-
   WORKING_DIR="$BASE_DIR/$arg"
   # Define the lock file
   combined="$WORKING_DIR/combined.pem"
