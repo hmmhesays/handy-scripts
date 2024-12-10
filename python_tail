@@ -1,0 +1,36 @@
+import time
+import os
+
+OFFSET_FILE = "offset.txt"
+
+def save_offset(offset):
+    """Save the current file offset."""
+    with open(OFFSET_FILE, 'w') as f:
+        f.write(str(offset))
+
+def load_offset():
+    """Load the saved file offset."""
+    if os.path.exists(OFFSET_FILE):
+        with open(OFFSET_FILE, 'r') as f:
+            return int(f.read())
+    return 0
+
+def tail_file(filename):
+    """Read a file from a saved offset."""
+    offset = load_offset()
+    with open(filename, 'r') as file:
+        # Seek to the saved offset
+        file.seek(offset)
+        while True:
+            line = file.readline()
+            if not line:
+                # Save the current offset and wait for new lines
+                save_offset(file.tell())
+                time.sleep(0.1)
+                continue
+            yield line
+
+# Example usage
+filename = "example.log"  # Replace with your file name
+for line in tail_file(filename):
+    print(line, end="")
