@@ -15,3 +15,7 @@ kamctl stats shmem | perl -e 'while(<STDIN>) { if($_ =~ m/(.*) = (.*)/) { print 
 
 kamcmd stats.get_statistics shmem: | perl -e 'while(<STDIN>) { $_ =~ m/(.*) = (.*)/; print "$1 = " . $2/1000000 . "\n"; }'
 
+
+#filter sip messages; 
+tshark -r /tmp/all_7000_1_m.pcap -Y 'sip.Method=="OPTIONS" && ip.dst==172.99.124.45' -T fields -e ip.src -e ip.dst -e sip.User-Agent -e sip.Call-ID -e frame.time
+
