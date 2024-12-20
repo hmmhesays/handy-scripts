@@ -1,4 +1,7 @@
 <?php
+/**
+* Copyright 2024 The Lost Packet, LLC. All rights reserved. This code is proprietary and may not be used, copied, modified, or distributed without explicit written permission from The Lost Packet, LLC.
+*/
 
 class SIPTools {
 static function parseSipUri($sipUri) {
