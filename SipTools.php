@@ -5,6 +5,7 @@
 # This code is proprietary and confidential. Redistribution and use in source 
 # or binary forms, with or without modification, are strictly prohibited 
 # without prior written permission from the copyright owner.
+# Permission to use this code may be revoked at any time for violation of the terms of use, failure to comply with payment agreements, or at the discretion of the copyright holder.
 #
 # For inquiries, please contact: admin@thelostpacket.org
 
