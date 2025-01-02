@@ -2,22 +2,25 @@
 
 # Default values
 WARN_DAYS=30
+PORT=443
 
 # Function to display usage
 usage() {
-    echo "Usage: $0 [-f CERT_FILE | -h HOSTNAME] [-w WARN_DAYS]"
+    echo "Usage: $0 [-f CERT_FILE | -h HOSTNAME] [-p PORT] [-w WARN_DAYS]"
     echo "Options:"
     echo "  -f CERT_FILE     Path to the certificate file to check."
     echo "  -h HOSTNAME      Hostname to fetch the certificate from (uses OpenSSL s_client)."
+    echo "  -p PORT          Port to connect to when using hostname (default: 443)."
     echo "  -w WARN_DAYS     Number of days before expiration to trigger a warning (default: 30)."
     exit 1
 }
 
 # Parse command-line arguments
-while getopts "f:h:w:" opt; do
+while getopts "f:h:p:w:" opt; do
     case $opt in
         f) CERT_FILE=$OPTARG ;;
         h) HOSTNAME=$OPTARG ;;
+        p) PORT=$OPTARG ;;
         w) WARN_DAYS=$OPTARG ;;
         *) usage ;;
     esac
@@ -33,7 +36,7 @@ get_expiration_date() {
     if [[ -n "$CERT_FILE" ]]; then
         openssl x509 -in "$CERT_FILE" -noout -enddate | sed 's/notAfter=//'
     elif [[ -n "$HOSTNAME" ]]; then
-        openssl s_client -connect "$HOSTNAME":443 -servername "$HOSTNAME" </dev/null 2>/dev/null | \
+        openssl s_client -connect "$HOSTNAME:$PORT" -servername "$HOSTNAME" </dev/null 2>/dev/null | \
             openssl x509 -noout -enddate | sed 's/notAfter=//'
     fi
 }
