@@ -1,0 +1,60 @@
+#!/bin/bash
+
+# Default values
+WARN_DAYS=30
+
+# Function to display usage
+usage() {
+    echo "Usage: $0 [-f CERT_FILE | -h HOSTNAME] [-w WARN_DAYS]"
+    echo "Options:"
+    echo "  -f CERT_FILE     Path to the certificate file to check."
+    echo "  -h HOSTNAME      Hostname to fetch the certificate from (uses OpenSSL s_client)."
+    echo "  -w WARN_DAYS     Number of days before expiration to trigger a warning (default: 30)."
+    exit 1
+}
+
+# Parse command-line arguments
+while getopts "f:h:w:" opt; do
+    case $opt in
+        f) CERT_FILE=$OPTARG ;;
+        h) HOSTNAME=$OPTARG ;;
+        w) WARN_DAYS=$OPTARG ;;
+        *) usage ;;
+    esac
+done
+
+if [[ -z "$CERT_FILE" && -z "$HOSTNAME" ]]; then
+    echo "Error: Either -f or -h must be specified."
+    usage
+fi
+
+# Function to get the certificate expiration date
+get_expiration_date() {
+    if [[ -n "$CERT_FILE" ]]; then
+        openssl x509 -in "$CERT_FILE" -noout -enddate | sed 's/notAfter=//'
+    elif [[ -n "$HOSTNAME" ]]; then
+        openssl s_client -connect "$HOSTNAME":443 -servername "$HOSTNAME" </dev/null 2>/dev/null | \
+            openssl x509 -noout -enddate | sed 's/notAfter=//'
+    fi
+}
+
+# Get expiration date
+EXPIRATION_DATE=$(get_expiration_date)
+if [[ -z "$EXPIRATION_DATE" ]]; then
+    echo "Error: Unable to retrieve the certificate expiration date."
+    exit 2
+fi
+
+# Convert expiration date to Unix timestamp
+EXPIRATION_TS=$(date -d "$EXPIRATION_DATE" +%s)
+CURRENT_TS=$(date +%s)
+DAYS_LEFT=$(( (EXPIRATION_TS - CURRENT_TS) / 86400 ))
+
+# Output the certificate status
+if (( DAYS_LEFT < 0 )); then
+    echo "The certificate has expired ($((-DAYS_LEFT)) days ago)."
+elif (( DAYS_LEFT <= WARN_DAYS )); then
+    echo "Warning: The certificate is close to expiring (in $DAYS_LEFT days)."
+else
+    echo "The certificate is valid (expires in $DAYS_LEFT days)."
+fi
