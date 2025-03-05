@@ -1,0 +1,138 @@
+An extremely high load average with minimal CPU usage and little disk activity often points to processes stuck in an uninterruptible sleep state (D state). This can be caused by:
+
+Blocked I/O (NFS, disk, or network issues)
+
+If a process is waiting on I/O (e.g., network-mounted filesystems like NFS), it contributes to load average but doesn’t consume CPU.
+Check with:
+sh
+Copy
+Edit
+ps axo pid,stat,cmd | grep " D"
+If many processes are stuck in D state, investigate slow storage, network latency, or failing hardware.
+High number of processes waiting for locks
+
+If you have databases (PostgreSQL, MySQL) or file-based locks, check for processes waiting on locks.
+Use:
+sh
+Copy
+Edit
+lsof +D /your/mount/point
+or
+sh
+Copy
+Edit
+cat /proc/locks
+Zombie Processes or Process Spawning Issues
+
+If you have a process constantly forking new children that quickly exit, it can inflate the load average.
+Check for excessive process creation:
+sh
+Copy
+Edit
+ps aux --sort=-pid | head -20
+Kernel-Level Issues (Soft Lockups, Hung Tasks)
+
+Check for kernel messages related to lockups:
+sh
+Copy
+Edit
+dmesg -T | grep -i "task"
+NFS or Network File System Issues
+
+If you're using an NFS mount, a stuck mount point can lead to high load.
+Try:
+sh
+Copy
+Edit
+df -hT
+If an NFS mount is hanging, try unmounting it (umount -f).
+Processes Waiting for Swapping (Check Memory Pressure)
+
+If there’s memory pressure, processes might be stuck waiting for memory.
+Check swap usage:
+sh
+Copy
+Edit
+free -m
+vmstat 1 5
+If si/so (swap in/out) values are high, you may be swapping.
+High Network Traffic or IRQ Storm
+
+If a network issue is causing high load:
+sh
+Copy
+Edit
+sar -n DEV 1 5
+or
+sh
+Copy
+Edit
+cat /proc/interrupts
+If a specific device (e.g., a network card) is spamming IRQs, it may cause load issues.
+Would you like help correlating your findings to a root cause?
+
+You said:
+I found php-fpm had a ton of dead state workers
+ChatGPT said:
+That makes sense—PHP-FPM workers stuck in a dead state (D) can lead to an extremely high load average because they count toward the load, but since they're not actively using CPU, top won't show high CPU usage.
+
+Possible Causes & Fixes for Dead PHP-FPM Workers
+1. Stuck on I/O (Disk or Network)
+Check if PHP-FPM is trying to read/write to a slow disk or an unresponsive network mount.
+Run:
+sh
+Copy
+Edit
+lsof -p <php-fpm-worker-pid>
+to see if it's stuck on a file, pipe, or socket.
+Fix:
+
+If it's an NFS or remote storage issue, try unmounting the problematic mount (umount -f /path).
+If it's disk I/O, check dmesg for disk errors.
+2. Waiting on Database Queries
+If PHP-FPM is waiting for a slow SQL query, it will hang in D state.
+Check database queries:
+sql
+Copy
+Edit
+SELECT * FROM pg_stat_activity WHERE state != 'idle';
+or for MySQL:
+sql
+Copy
+Edit
+SHOW FULL PROCESSLIST;
+If there are long-running queries, optimize them or add indexes.
+Fix:
+
+Restart PHP-FPM and investigate slow queries (EXPLAIN ANALYZE in PostgreSQL/MySQL).
+3. Exceeding Process Manager Limits (pm.max_children)
+If too many PHP-FPM workers are created and waiting, it can overload the system.
+Check pm.max_children in php-fpm.conf:
+sh
+Copy
+Edit
+grep 'pm.max_children' /etc/php/*/fpm/pool.d/*.conf
+If it’s too high for available resources, reduce it.
+4. PHP-FPM Logs Show Errors
+Check logs for signs of workers crashing, segfaulting, or being killed:
+sh
+Copy
+Edit
+tail -f /var/log/php*-fpm.log
+or
+sh
+Copy
+Edit
+journalctl -u php*-fpm --no-pager | tail -50
+5. PHP-FPM Restart or Reload Issues
+If workers are stuck even after a restart, try:
+sh
+Copy
+Edit
+systemctl restart php*-fpm
+If they don't clear, you may need to fully kill PHP-FPM:
+sh
+Copy
+Edit
+pkill -9 php-fpm
+systemctl restart php*-fpm
