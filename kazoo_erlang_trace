@@ -1,3 +1,8 @@
 dbg:tracer(process, {fun(Msg, N) -> io:format("TRACE: ~p~n", [Msg]), N+1 end, 0}).
 dbg:tpl(my_module, '_', []).
 dbg:p(all, c).
+
+
+dbg:tracer(process, {fun(Msg, N) -> io:format("TRACE: ~p~n", [Msg]), N+1 end, 0}).
+dbg:tpl(cf_acdc_member, [{'_',[],[{return_trace}]}]).
+dbg:p(all, c).
