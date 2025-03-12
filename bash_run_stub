@@ -1,0 +1,55 @@
+#!/bin/bash
+
+# Function to display help
+usage() {
+    echo "Usage: $0 [options]"
+    echo "Options:"
+    echo "  -l <address>   Set the listen address"
+    echo "  -f <file>      Set the file path"
+    echo "  -e <file>      Load environment variables from a file"
+    echo "  -h             Show this help message"
+    echo
+    echo "Environment File Variables:"
+    echo "  LISTEN   - Address to listen on"
+    echo "  FILE     - Path to the file"
+    exit 0
+}
+
+# Default values from environment file if available
+if [[ -f ".env" ]]; then
+    source .env
+fi
+
+# Override with command-line arguments
+while getopts ":l:f:e:h" opt; do
+    case "$opt" in
+        l)
+            LISTEN="$OPTARG"
+            ;;
+        f)
+            FILE="$OPTARG"
+            ;;
+        e)
+            if [[ -f "$OPTARG" ]]; then
+                source "$OPTARG"
+            else
+                echo "Environment file not found: $OPTARG"
+                exit 1
+            fi
+            ;;
+        h)
+            usage
+            ;;
+        ?)
+            echo "Unknown option: -$OPTARG"
+            usage
+            ;;
+    esac
+done
+
+# Shift to handle additional arguments if needed
+shift $((OPTIND - 1))
+
+# Print the parsed values
+echo "Listen: $LISTEN"
+echo "File: $FILE"
