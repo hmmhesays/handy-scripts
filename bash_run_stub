@@ -50,6 +50,11 @@ done
 # Shift to handle additional arguments if needed
 shift $((OPTIND - 1))
 
+if [[ -z "$LISTEN" || -z "$FILE" ]]; then
+    echo "Error: -l and -f options are required."
+    usage
+fi
+CURRENT_DIRECTORY="$(cd "$(dirname "$0")" && pwd)"
 # Print the parsed values
 echo "Listen: $LISTEN"
 echo "File: $FILE"
