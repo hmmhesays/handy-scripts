@@ -1,0 +1,14 @@
+[Unit]
+Description=Run Bash Script After Network Starts
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+EnvironmentFile=-/etc/default/your-service-name
+ExecStart=/path/to/your-script.sh
+Restart=on-failure
+User=root
+
+[Install]
+WantedBy=multi-user.target
