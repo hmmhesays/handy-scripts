@@ -1,0 +1,147 @@
+Data Passed to set_exception_handler()
+The function registered with set_exception_handler() will receive an instance of an exception, specifically an object of a class that extends Throwable (either Exception or Error).
+
+For example:
+
+php
+Copy
+Edit
+set_exception_handler(function (Throwable $e) {
+    echo "Uncaught Exception: " . $e->getMessage() . "\n";
+    echo "File: " . $e->getFile() . "\n";
+    echo "Line: " . $e->getLine() . "\n";
+    echo "Stack trace:\n" . $e->getTraceAsString();
+});
+
+throw new Exception("Something went wrong!");
+Available Exception Data
+The exception object (Throwable $e) provides the following methods to access data:
+
+$e->getMessage() – The error message.
+$e->getCode() – The error code (if any).
+$e->getFile() – The file where the exception was thrown.
+$e->getLine() – The line number where the exception was thrown.
+$e->getTrace() – An array representing the call stack.
+$e->getTraceAsString() – A string representation of the call stack.
+$e->getPrevious() – If the exception was chained, this returns the previous exception.
+Would you like a specific example or customization for logging?
+
+
+
+
+
+
+
+
+You said:
+I would like to be able to know what exception was thrown. I would like to also call a custom handler function within that exception if one is set in that class. Is this possible?
+ChatGPT said:
+Yes, it's possible! You can determine the exact exception class and check if it defines a custom handler method. If it does, you can invoke that method dynamically.
+
+Steps:
+Use get_class($e) to determine the exception class.
+Check if the exception object has a custom method using method_exists($e, 'customHandler').
+Call the method dynamically if it exists.
+Example:
+php
+Copy
+Edit
+set_exception_handler(function (Throwable $e) {
+    echo "Uncaught Exception of type: " . get_class($e) . "\n";
+    echo "Message: " . $e->getMessage() . "\n";
+    echo "File: " . $e->getFile() . "\n";
+    echo "Line: " . $e->getLine() . "\n";
+
+    // Check if the exception has a custom handler
+    if (method_exists($e, 'customHandler')) {
+        echo "Calling custom handler...\n";
+        $e->customHandler();
+    } else {
+        echo "No custom handler defined.\n";
+    }
+});
+
+// Custom Exception with a handler method
+class MyException extends Exception {
+    public function customHandler() {
+        echo "Handling MyException specifically!\n";
+    }
+}
+
+// Throwing the custom exception
+throw new MyException("Something went wrong!");
+Output:
+vbnet
+Copy
+Edit
+Uncaught Exception of type: MyException
+Message: Something went wrong!
+File: /path/to/script.php
+Line: 28
+Calling custom handler...
+Handling MyException specifically!
+This way, you can detect the specific exception type and call its custom method dynamically. Would you like further refinements, such as logging or different handling per class?
+
+
+
+
+
+
+
+You said:
+Where do the code and the message come from. Is that set when I throw the exception?
+ChatGPT said:
+Yes, the code and message of an exception are set when you throw it, either explicitly or by default.
+
+Where Do They Come From?
+Message: This is the first argument when you create an exception. If not provided, it defaults to an empty string ("").
+Code: This is the second argument, which defaults to 0 if not specified.
+Example:
+php
+Copy
+Edit
+throw new Exception("Something went wrong!", 1001);
+Here:
+
+Message = "Something went wrong!"
+Code = 1001
+Exception Constructor
+The Exception class constructor looks like this:
+
+php
+Copy
+Edit
+public function __construct(
+    string $message = "", 
+    int $code = 0, 
+    ?Throwable $previous = null
+)
+$message → The exception message.
+$code → The exception code.
+$previous → A previous exception (for chaining).
+Retrieving the Values
+Once caught (or passed to set_exception_handler), you can retrieve these values:
+
+php
+Copy
+Edit
+set_exception_handler(function (Throwable $e) {
+    echo "Exception Message: " . $e->getMessage() . "\n";
+    echo "Exception Code: " . $e->getCode() . "\n";
+});
+
+throw new Exception("Custom error message", 42);
+Output:
+php
+Copy
+Edit
+Exception Message: Custom error message
+Exception Code: 42
+Would you like to enforce specific exception codes or create a base exception class to standardize them?
+
+
+
+
+
+
+
