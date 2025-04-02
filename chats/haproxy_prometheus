@@ -1,0 +1,95 @@
+what are the best haproxy metrics for prometheus output?
+
+
+ChatGPT said:
+When exposing HAProxy metrics to Prometheus (usually via the HAProxy Prometheus Exporter), the best metrics to monitor depend on your use case. Here are some key HAProxy metrics that are valuable for monitoring:
+
+Frontend Metrics
+haproxy_frontend_current_sessions – Number of current active sessions.
+
+haproxy_frontend_requests_total – Total number of HTTP requests received.
+
+haproxy_frontend_errors_total – Total number of request errors.
+
+haproxy_frontend_bytes_in_total / haproxy_frontend_bytes_out_total – Total inbound and outbound data processed.
+
+Backend Metrics
+haproxy_backend_up – Indicates if the backend is up (1) or down (0).
+
+haproxy_backend_current_queue – Number of requests waiting in the queue.
+
+haproxy_backend_current_sessions – Number of active sessions per backend.
+
+haproxy_backend_bytes_in_total / haproxy_backend_bytes_out_total – Total bytes sent and received.
+
+haproxy_backend_response_duration_seconds – Average response time of backends.
+
+Server Metrics
+haproxy_server_up – Indicates if a server is up (1) or down (0).
+
+haproxy_server_current_sessions – Current active sessions per server.
+
+haproxy_server_max_sessions – Maximum sessions allowed on a server.
+
+haproxy_server_connection_errors_total – Number of connection errors.
+
+haproxy_server_queue_current – Number of requests waiting in the queue.
+
+haproxy_server_check_duration_seconds – Time taken for health checks.
+
+Rate Metrics
+haproxy_frontend_http_requests_rate – Number of HTTP requests per second.
+
+haproxy_backend_http_responses_total – Total HTTP responses per status code (1xx, 2xx, 3xx, 4xx, 5xx).
+
+haproxy_backend_http_response_duration_seconds – Response time in seconds.
+
+Error & Retry Metrics
+haproxy_server_retries_total – Total retries due to failures.
+
+haproxy_server_failed_checks_total – Number of failed health checks.
+
+haproxy_server_status – Current status of the server (0 = DOWN, 1 = UP).
+
+Useful Prometheus Queries
+Check backend health:
+
+promql
+Copy
+Edit
+haproxy_backend_up == 0
+Monitor response latency:
+
+promql
+Copy
+Edit
+histogram_quantile(0.95, rate(haproxy_backend_response_duration_seconds_bucket[5m]))
+Track error rates:
+
+promql
+Copy
+Edit
+rate(haproxy_frontend_errors_total[5m])
+Identify overloaded servers:
+
+promql
+Copy
+Edit
+haproxy_server_queue_current > 5
+Would you like help setting up HAProxy metrics collection?
+
+
+
+
+
+
+
+
+
+
+
+Search
+
+Reason
+
+
