@@ -1,0 +1,44 @@
+#!/bin/bash
+set -euo pipefail
+IFS=$'\n\t'
+
+# --- Dry Run Support ---
+DRY_RUN="${DRY_RUN:-0}"
+
+run() {
+  echo "+ $*"
+  if [ "$DRY_RUN" -eq 0 ]; then
+    "$@"
+  fi
+}
+
+# --- Required Environment Variables ---
+: "${DOMAIN:?Must set DOMAIN}"
+: "${BASEDIR:?Must set BASEDIR}"
+# Add more as needed: : "${VAR:?error message}"
+
+# --- Logging Helpers ---
+log()    { echo "[INFO] $*"; }
+warn()   { echo "[WARN] $*" >&2; }
+fatal()  { echo "[ERROR] $*" >&2; exit 1; }
+
+# --- Usage Example ---
+usage() {
+  cat <<EOF
+Usage: $0
+
+Required environment variables:
+  DOMAIN   - Your domain name (e.g., example.com)
+  BASEDIR  - Path to directory containing fullchain.pem and privkey.pem
+
+Optional:
+  DRY_RUN=1   - Show commands without executing
+
+Example:
+  DOMAIN=example.com BASEDIR=/etc/letsencrypt/live/example.com DRY_RUN=1 $0
+EOF
+  exit 1
+}
+
+# --- Trap for clean exit or errors ---
+trap 'fatal "Script failed at line $LINENO."' ERR
