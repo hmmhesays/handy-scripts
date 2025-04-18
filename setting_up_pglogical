@@ -1,0 +1,29 @@
+You must have superuser for pglogical
+
+CREATE ROLE replication_user WITH LOGIN PASSWORD 'db0e1864' SUPERUSER;
+
+CREATE EXTENSION pglogical;
+
+SELECT pglogical.create_node(
+    node_name := 'dev1',
+    dsn := 'host=10.216.182.125 port=5432 dbname=freeswitch user=replication_user password=db0e1864');
+
+SELECT pglogical.create_node(
+    node_name := 'dev2',
+    dsn := 'host=10.216.182.215 port=5432 dbname=freeswitch user=replication_user password=db0e1864');
+
+pglogical.replication_set_add_table('default', 'z_conferences', TRUE, NULL, NULL);
+
+SELECT pglogical.create_subscription(
+    subscription_name := 'sub_to_dev1',
+    provider_dsn := 'host=10.216.182.125 port=5432 dbname=freeswitch user=replication_user password=db0e1864',
+    replication_sets := ARRAY['default'],
+    synchronize_data := true,
+    forward_origins := '{}' );
+
+    SELECT pglogical.create_subscription(
+    subscription_name := 'sub_to_dev2',
+    provider_dsn := 'host=10.216.182.215 port=5432 dbname=freeswitch user=replication_user password=db0e1864',
+    replication_sets := ARRAY['default'],
+    synchronize_data := false,
+    forward_origins := '{}' );
