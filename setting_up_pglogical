@@ -1,37 +1,51 @@
 You must have superuser for pglogical
 
-CREATE ROLE replication_user WITH LOGIN PASSWORD 'db0e1864' SUPERUSER;
+CREATE ROLE replication_user WITH LOGIN PASSWORD 'pwd' SUPERUSER;
 
 CREATE EXTENSION pglogical;
 
 SELECT pglogical.create_node(
-    node_name := 'dev1',
-    dsn := 'host=10.216.182.125 port=5432 dbname=freeswitch user=replication_user password=db0e1864');
+    node_name := 'p1',
+    dsn := 'host=ash1-pg17-fs.p.vinixtech.net port=5432 dbname=freeswitch user=replication_user password=pwd');
 
 SELECT pglogical.create_node(
-    node_name := 'dev2',
-    dsn := 'host=10.216.182.215 port=5432 dbname=freeswitch user=replication_user password=db0e1864');
+    node_name := 'p2',
+    dsn := 'host=nyc1-pg17-fs.p.vinixtech.net port=5432 dbname=freeswitch user=replication_user password=pwd');
+
+ALTER TABLE ONLY public.calls ALTER COLUMN pkey_id SET DEFAULT snowflake.nextval('public.calls_pkey_id_seq'::regclass);
+ALTER TABLE ONLY public.registrations ALTER COLUMN pkey_id SET DEFAULT snowflake.nextval('public.registrations_pkey_id_seq'::regclass);
+ALTER TABLE ONLY public.channels ALTER COLUMN pkey_id SET DEFAULT snowflake.nextval('public.channels_pkey_id_seq'::regclass);
+ALTER TABLE ONLY public.registrations ALTER COLUMN pkey_id SET DEFAULT snowflake.nextval('public.registrations_pkey_id_seq'::regclass);
+ALTER TABLE ONLY public.z_conference_events ALTER COLUMN id SET DEFAULT snowflake.nextval('public.z_conference_events_id_seq'::regclass);
+ALTER TABLE ONLY public.z_conference_triggers ALTER COLUMN id SET DEFAULT snowflake.nextval('public.z_conference_triggers_id_seq'::regclass);
+ALTER TABLE ONLY public.z_conference_objects ALTER COLUMN id SET DEFAULT snowflake.nextval('public.z_conference_objects_id_seq'::regclass);
+ALTER TABLE ONLY public.z_conferences ALTER COLUMN id SET DEFAULT snowflake.nextval('public.z_conferences_id_seq'::regclass);
+ALTER TABLE ONLY public.z_server_pool ALTER COLUMN id SET DEFAULT snowflake.nextval('public.z_server_pool_id_seq'::regclass);
 
 select pglogical.replication_set_add_table(set_name := 'default', relation := 'calls', synchronize_data := FALSE, columns := NULL, row_filter := NULL);
 select pglogical.replication_set_add_table(set_name := 'default', relation := 'channels', synchronize_data := FALSE, columns := NULL, row_filter := NULL);
+select pglogical.replication_set_add_table(set_name := 'default', relation := 'registrations', synchronize_data := FALSE, columns := NULL, row_filter := NULL);
 select pglogical.replication_set_add_table(set_name := 'default', relation := 'z_conference_events', synchronize_data := FALSE, columns := NULL, row_filter := NULL);
 select pglogical.replication_set_add_table(set_name := 'default', relation := 'z_conference_objects', synchronize_data := FALSE, columns := NULL, row_filter := NULL);
 select pglogical.replication_set_add_table(set_name := 'default', relation := 'z_conference_triggers', synchronize_data := FALSE, columns := NULL, row_filter := NULL);
 select pglogical.replication_set_add_table(set_name := 'default', relation := 'z_conferences', synchronize_data := FALSE, columns := NULL, row_filter := NULL);
 select pglogical.replication_set_add_table(set_name := 'default', relation := 'z_server_pool', synchronize_data := FALSE, columns := NULL, row_filter := NULL);
 
-pglogical.alter_subscription_synchronize(subscription_name name, truncate bool);
+select pglogical.alter_subscription_synchronize(subscription_name name, truncate bool);
+select pglogical.wait_for_table_sync_complete;
 
+    #RUN ON SECOND NODE
     SELECT pglogical.create_subscription(
-    subscription_name := 'sub_to_dev1',
-    provider_dsn := 'host=10.216.182.125 port=5432 dbname=freeswitch user=replication_user password=db0e1864',
+    subscription_name := 'sub_to_p1',
+    provider_dsn := 'host=ash1-pg17-fs.p.vinixtech.net port=5432 dbname=freeswitch user=replication_user password=pwd,
     replication_sets := ARRAY['default'],
     synchronize_data := FALSE,
     forward_origins := '{}' );
 
+    #RUN ON FIRST NODE
     SELECT pglogical.create_subscription(
-    subscription_name := 'sub_to_dev2',
-    provider_dsn := 'host=10.216.182.215 port=5432 dbname=freeswitch user=replication_user password=db0e1864',
+    subscription_name := 'sub_to_p2',
+    provider_dsn := 'host=nyc1-pg17-fs.p.vinixtech.net port=5432 dbname=freeswitch user=replication_user password=pwd',
     replication_sets := ARRAY['default'],
     synchronize_data := FALSE,
     forward_origins := '{}' );
