@@ -1,3 +1,9 @@
+haproxy_frontend_current_sessions
+haproxy_frontend_http_responses_total
+haproxy_frontend_limit_sessions
+haproxy_frontend_http_responses_total
+haproxy_server_connection_errors_total
+
 what are the best haproxy metrics for prometheus output?
 
 
