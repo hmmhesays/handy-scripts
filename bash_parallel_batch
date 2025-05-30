@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# Example array
+items=(one two three four five six seven eight nine ten eleven twelve)
+
+# Batch size (how many to run in parallel)
+batch_size=8
+
+# Function to process each item
+process_item() {
+    item=$1
+    echo "Processing $item..."
+    sleep 2  # Simulate work
+    echo "Done with $item"
+}
+
+# Main loop
+for ((i=0; i<${#items[@]}; i++)); do
+    process_item "${items[$i]}" &  # Fork into background
+
+    # Check if we've started a full batch
+    if (( (i+1) % batch_size == 0 )); then
+        wait  # Wait for all background jobs in this batch
+    fi
+done
+
+# Final wait in case there are remaining items
+wait
