@@ -1,0 +1,36 @@
+#!/bin/bash
+
+LOCAL_COUCHDB="http://x.x.x.x:5984"
+REMOTE_COUCHDB="http://x.x.x.x:5984"
+AUTH=""  # Leave empty if no auth
+
+# URL encode function
+urlencode() {
+  local raw="$1"
+  local encoded=""
+  local i c
+  for (( i = 0; i < ${#raw}; i++ )); do
+    c="${raw:$i:1}"
+    case "$c" in
+      [a-zA-Z0-9.~_-]) encoded+="$c" ;;
+      *) printf -v encoded '%s%%%02X' "$encoded" "'$c"
+    esac
+  done
+  echo "$encoded"
+}
+
+# Get list of databases
+databases=$(curl -s $AUTH "$LOCAL_COUCHDB/_all_dbs" | jq -r '.[]')
+
+for db in $databases; do
+  encoded_db=$(urlencode "$db")
+
+  local_count=$(curl -s $AUTH "$LOCAL_COUCHDB/$encoded_db" | jq '.doc_count')
+  remote_count=$(curl -s $AUTH "$REMOTE_COUCHDB/$encoded_db" | jq '.doc_count')
+
+  if [ "$local_count" != "$remote_count" ]; then
+    echo "❌ $db: Local=$local_count, Remote=$remote_count"
+  else
+    echo "✅ $db: Doc counts match ($local_count)"
+  fi
+done
