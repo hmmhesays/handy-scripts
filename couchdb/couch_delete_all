@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# CouchDB credentials and URL
+COUCHDB_URL=""
+USERNAME=""
+PASSWORD=""
+
+# Get list of all databases
+databases=$(curl -s -u "$USERNAME:$PASSWORD" "$COUCHDB_URL/_all_dbs" | jq -r '.[]')
+
+for db in $databases; do
+    # Skip system databases if you want
+    if [[ "$db" == "_users" || "$db" == "_replicator" || "$db" == "_global_changes" ]]; then
+        echo "Skipping system database: $db"
+        continue
+    fi
+
+    # URL encode the database name using jq
+    encoded_db=$(jq -nr --arg db "$db" '$db | @uri')
+
+    # Send DELETE request
+    echo "Deleting database: $db"
+    curl -s -X DELETE -u "$USERNAME:$PASSWORD" "$COUCHDB_URL/$encoded_db"
+done
