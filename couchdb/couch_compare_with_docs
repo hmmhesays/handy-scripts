@@ -1,0 +1,71 @@
+#!/bin/bash
+
+LOCAL_COUCHDB="http://localhost:5984"
+REMOTE_COUCHDB="http://remotehost:5984"
+AUTH="-u admin:password"  # Leave empty if no auth
+CHECK_DOCS=${1:-false}    # Pass "true" as first argument to enable per-doc checks
+
+# URL encode function
+urlencode() {
+  local raw="$1"
+  local encoded=""
+  local i c
+  for (( i = 0; i < ${#raw}; i++ )); do
+    c="${raw:$i:1}"
+    case "$c" in
+      [a-zA-Z0-9.~_-]) encoded+="$c" ;;
+      *) printf -v encoded '%s%%%02X' "$encoded" "'$c"
+    esac
+  done
+  echo "$encoded"
+}
+
+urlencode_doc_id() {
+  local raw="$1"
+  if [[ "$raw" == _design/* ]]; then
+    echo "_design/$(urlencode "${raw#_design/}")"
+  elif [[ "$raw" == _local/* ]]; then
+    echo "_local/$(urlencode "${raw#_local/}")"
+  else
+    echo "$(urlencode "$raw")"
+  fi
+}
+
+# Get list of databases
+databases=$(curl -s $AUTH "$LOCAL_COUCHDB/_all_dbs" | jq -r '.[]')
+
+for db in $databases; do
+  encoded_db=$(urlencode "$db")
+
+  local_count=$(curl -s $AUTH "$LOCAL_COUCHDB/$encoded_db" | jq '.doc_count')
+  remote_count=$(curl -s $AUTH "$REMOTE_COUCHDB/$encoded_db" | jq '.doc_count')
+
+  status="✅"
+  mismatch_docs=""
+
+  if [ "$local_count" != "$remote_count" ]; then
+    status="❌"
+  fi
+
+  if [ "$CHECK_DOCS" = "true" ]; then
+    # Get all local doc IDs
+    doc_ids=$(curl -s $AUTH "$LOCAL_COUCHDB/$encoded_db/_all_docs?include_docs=false" | jq -r '.rows[].id')
+
+    for doc_id in $doc_ids; do
+      encoded_id=$(urlencode_doc_id "$doc_id")
+
+      # HEAD request to check if the doc exists remotely
+      http_code=$(curl -s -o /dev/null -w "%{http_code}" $AUTH "$REMOTE_COUCHDB/$encoded_db/$encoded_id")
+
+      if [ "$http_code" -ne 200 ]; then
+        mismatch_docs+="$doc_id "
+        status="❌"
+      fi
+    done
+  fi
+
+  echo "$status $db: Local=$local_count, Remote=$remote_count"
+  if [ -n "$mismatch_docs" ]; then
+    echo "   Missing docs on remote: $mismatch_docs"
+  fi
+done
