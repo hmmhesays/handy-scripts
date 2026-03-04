@@ -1,3 +1,16 @@
+dbg:tracer(process, {fun
+    ({trace, Pid, call, {Mod, Fun, Args}}, State) ->
+        io:format("~p:~p/~p by ~p~n", [Mod, Fun, length(Args), Pid]),
+        State;
+    (_Msg, State) ->
+        State
+end, ok}).
+
+dbg:p(all, c).
+dbg:tpl(konami_record_call, '_', '_', []).
+
+dbg:stop_clear().
+
 ######################### V1 #########################
 dbg:tracer(process, {fun
     (Msg, State) ->
