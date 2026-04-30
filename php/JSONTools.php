@@ -38,12 +38,8 @@ function mergeRecursive($a, $b, array $forbiddenPaths, array $currentPath) {
 
             $newPath = [...$currentPath, $key];
 
-            // Forbidden path → do NOT merge, keep left-hand side
+            // Forbidden path → keep left-hand value
             if (pathIsForbidden($newPath, $forbiddenPaths)) {
-                // If key doesn't exist on left, we still keep "left" (i.e., do nothing)
-                if (!array_key_exists($key, $arrA)) {
-                    // optional: you could choose to set it, but spec says "don't merge"
-                }
                 continue;
             }
 
@@ -66,7 +62,7 @@ function mergeRecursive($a, $b, array $forbiddenPaths, array $currentPath) {
         return $arrA;
     }
 
-    // Fallback: not both arrays/objects → keep left-hand value
+    // Fallback: keep left-hand value
     return $a;
 }
 
