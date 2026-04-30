@@ -46,6 +46,21 @@ class JSONTools
         $arrA = $isObjA ? get_object_vars($a) : (is_array($a) ? $a : null);
         $arrB = $isObjB ? get_object_vars($b) : (is_array($b) ? $b : null);
 
+        /**
+         * FIX: Preserve empty objects {}
+         * If $b was an object with no properties, get_object_vars() returns []
+         * We must preserve the fact that it was an object.
+         */
+        if ($isObjB && empty($arrB)) {
+            // If left side is also an object, keep left-hand object
+            if ($isObjA) {
+                return $a;
+            }
+
+            // Otherwise return an empty object
+            return (object)[];
+        }
+
         // If both are arrays/objects → merge
         if (is_array($arrA) && is_array($arrB)) {
 
