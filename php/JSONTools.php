@@ -121,4 +121,53 @@ class JSONTools
         }
         return false;
     }
+
+    /**
+     * Extracts the value for a given key from a JSON string using fast string scanning.
+     *
+     * This method avoids json_decode() and regular expressions for maximum performance,
+     * making it suitable for predictable, flat JSON where the key/value format is stable.
+     * It works by locating the key with strpos(), skipping whitespace, and capturing the
+     * next quoted string as the value.
+     *
+     * Performance:
+     * - Extremely fast: uses only native string functions (strpos, substr).
+     * - No JSON parsing overhead and no regex engine invocation.
+     *
+     * Limitations:
+     * - Assumes the JSON is well‑formed and predictable.
+     * - Only supports simple string values (e.g., "value"), not numbers, objects, arrays,
+     *   or strings containing escaped quotes.
+     * - Returns the first occurrence of the key; does not distinguish nesting levels.
+     * - Does not validate JSON structure and may misinterpret keys inside string literals.
+     * - Not suitable for complex or untrusted JSON input.
+     *
+     * @param string $json The raw JSON string to search.
+     * @param string $key  The key whose string value should be extracted.
+     * @return string|null The extracted value, or null if the key is not found.
+     */
+    public static function fastJsonExtractValue(string $json, string $key)
+    {
+        $needle = '"' . $key . '"';
+        $pos = strpos($json, $needle);
+        if ($pos === false) return null;
+
+        // Find colon after the key
+        $pos = strpos($json, ':', $pos);
+        if ($pos === false) return null;
+
+        // Skip whitespace after colon
+        while (isset($json[++$pos]) && ctype_space($json[$pos])) {
+        }
+
+        // Expect a quote
+        if ($json[$pos] !== '"') return null;
+        $start = $pos + 1;
+
+        // Find closing quote
+        $end = strpos($json, '"', $start);
+        if ($end === false) return null;
+
+        return substr($json, $start, $end - $start);
+    }
 }
